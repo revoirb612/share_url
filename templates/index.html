@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>URL Collector</title>
+</head>
+<body>
+    <form method="post">
+        URL: <input type="text" name="url" required>
+        Author: <input type="text" name="author" required>
+        Access Count: <input type="number" name="access_count" required>
+        Password (optional): <input type="password" name="password">
+        <input type="submit" value="Submit">
+    </form>
+    <ul>
+        {% for url in urls %}
+            <li>{{ url['url'] }} by {{ url['author'] }} - {{ url['created_at'] }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
