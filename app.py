@@ -1,53 +1,59 @@
-
-from flask import Flask, request, render_template, g
-import sqlite3
 from datetime import datetime
+from flask import Flask, render_template, request, redirect, abort
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-DATABASE = 'urls.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+db = SQLAlchemy(app)
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
+class Data(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.String(500))
+    author = db.Column(db.String(100))
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    password = db.Column(db.String(100))
+    category = db.Column(db.String(100))
+    allowed_count = db.Column(db.Integer)
+    actual_count = db.Column(db.Integer, default=0)
 
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
+    def __repr__(self):
+        return '<Data %r>' % self.id
 
-def init_db():
-    with app.app_context():
-        db = get_db()
-        db.execute('''CREATE TABLE IF NOT EXISTS urls (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        url TEXT NOT NULL,
-                        author TEXT NOT NULL,
-                        access_count INTEGER NOT NULL,
-                        password TEXT,
-                        created_at DATETIME NOT NULL
-                    );''')
-        db.commit()
+@app.before_first_request
+def create_tables():
+    db.create_all()
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    db = get_db()
     if request.method == 'POST':
-        url = request.form['url']
-        author = request.form['author']
-        access_count = request.form['access_count']
-        password = request.form.get('password')
-        created_at = datetime.now()
+        data_content = request.form['content']
+        data_description = request.form['description']
+        data_author = request.form['author']
+        data_password = request.form.get('password')
+        data_category = request.form['category']
+        data_allowed_count = int(request.form['allowed_count'])
+        new_data = Data(content=data_content, description=data_description,
+                author=data_author, password=data_password, category=data_category, allowed_count=data_allowed_count)
+        db.session.add(new_data)
+        db.session.commit()
+        return redirect('/')
+    else:
+        datas = Data.query.all()
+        return render_template('index.html', datas=datas)
 
-        db.execute('INSERT INTO urls (url, author, access_count, password, created_at) VALUES (?, ?, ?, ?, ?)',
-                   (url, author, access_count, password, created_at))
-        db.commit()
+@app.route('/<int:id>', methods=['GET'])
+def handle_link(id):
+    data = Data.query.get_or_404(id)
 
-    urls = db.execute('SELECT * FROM urls').fetchall()
-    return render_template('index.html', urls=urls)
+    if data.allowed_count <= data.actual_count:
+        abort(403) 
+
+    data.allowed_count -= 1
+    data.actual_count += 1
+    db.session.commit()
+
+    return redirect(data.content)
 
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True)
