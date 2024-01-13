@@ -2,62 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>하입링크 beta</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@600&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
+        /* 잠금 아이콘 스타일 */
+        .locked {
+            color: red;
+            float: right;
         }
-        footer {
+        /* footer 스타일 */
+        .footer {
             position: fixed;
             left: 0;
             bottom: 0;
             width: 100%;
-            background-color: #333;
-            color: white;
+            background-color: #f8f9fa;
             text-align: center;
-            padding: 10px 0;
-        }
-        footer p {
-            margin: 0;
-            padding: 0;
-            font-size: 0.8em;
         }
     </style>
 </head>
 <body>
-    <header>
-        <p>학교 수업을 위한 D.N.A.와 생성형 AI, 그리고 에듀테크</p>
-    </header>
+    <div class="container">
+        <form method="POST" class="my-3">
+            <div class="form-group">
+                <input type="text" name="content" class="form-control" placeholder="Enter URL">
+            </div>
+            <div class="form-group">
+                <input type="text" name="description" class="form-control" placeholder="Enter description">
+            </div>
+            <div class="form-group">
+                <input type="text" name="author" class="form-control" placeholder="Enter author name">
+            </div>
+            <div class="form-group">
+                <input type="password" name="password" class="form-control" placeholder="Enter password (optional)">
+            </div>
+            <div class="form-group">
+                <input type="text" name="category" class="form-control" placeholder="Enter category">
+            </div>
+            <div class="form-group">
+                <input type="number" name="allowed_count" class="form-control" placeholder="Enter allowed count">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        
+        <!-- 카드 형태로 데이터 출력, 비밀번호 확인 후 새 탭에서 링크 연결 -->
+        <div class="row">
+            {% for data in datas %}
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card my-3" onclick="checkPassword('{{ data.password }}', '{{ url_for('handle_link', id=data.id) }}')">
+                        <!-- 비밀번호가 설정된 경우 잠금 아이콘 표시 -->
+                        {% if data.password %}
+                            <span class="locked">🔒</span>
+                        {% endif %}
+                        <div class="card-body">
+                            <!-- 데이터 표시 -->
+                            <p>ID: {{ data.id }}</p> <!-- 데이터의 ID 추가 -->
+                            <p>{{ data.description }}</p>
+                            <p>{{ data.author }}</p>
+                            <p>{{ data.created_at }}</p>
+                            <p>{{ data.category }}</p>
+                            <p>{{ data.allowed_count }}</p>
+                            <p>{{ data.actual_count }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer py-3">
+        <div class="container">
+            <span class="text-muted">&copy; 2024 홍승일 All Rights Reserved.</span>
+        </div>
+    </div>
 
-    <form method="POST">
-        <input type="text" name="content" placeholder="Enter URL">
-        <input type="text" name="description" placeholder="Enter description">  <!-- URL 설명 -->
-        <input type="text" name="author" placeholder="Enter author name">
-        <input type="password" name="password" placeholder="Enter password (optional)">  <!-- 패스워드 -->
-        <input type="text" name="category" placeholder="Enter category">
-        <input type="number" name="allowed_count" placeholder="Enter allowed count">
-        <input type="submit" value="Submit">
-    </form>
-
-    <ul>
-        {% for data in datas %}
-            <li>
-                <a href="{{ url_for('handle_link', id=data.id) }}">{{ data.content }}</a>
-                <p>Description: {{ data.description }}</p>
-                <p>Author: {{ data.author }}</p>
-                <p>Created at: {{ data.created_at }}</p>
-                <p>Category: {{ data.category }}</p>
-                <p>Allowed count: {{ data.allowed_count }}</p>
-                <p>actual count: {{ data.actual_count }}</p>
-            </li>
-        {% endfor %}
-    </ul>
-
-    <footer>
-        <p>&copy; 2024 홍승일 All Rights Reserved.</p>
-    </footer>
+    <script>
+        // 비밀번호 확인 함수
+        function checkPassword(password, url) {
+            if (password) {
+                var userPassword = prompt("Please enter password");
+                if (userPassword === password) {
+                    window.open(url, '_blank');
+                } else {
+                    alert("Incorrect password. Please try again.");
+                }
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+    </script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>
